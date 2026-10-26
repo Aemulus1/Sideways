@@ -1,0 +1,31 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sideways — personages lopen</title><style>body{margin:0;background:#142338;color:white;font:16px system-ui}header{padding:15px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}button{background:#f5b849;border:0;border-radius:9px;padding:11px 16px;font-weight:700;cursor:pointer}button.active{background:#68d9a0}canvas{display:block;width:100%;height:auto;max-height:75vh;touch-action:none}small{opacity:.8}</style></head><body><header><strong>SIDEWAYS · looptest</strong><button id="man" class="active">Man</button><button id="vrouw">Vrouw</button><button id="left">◀ Links</button><button id="right">Rechts ▶</button><small>Toetsen: ← → of A D · knoppen ingedrukt houden</small></header><canvas id="game" width="1000" height="560"></canvas><script>
+const c=document.getElementById('game'),x=c.getContext('2d');let who='man',pos=480,dir=1,walk=0,held={left:false,right:false},last=performance.now();
+for(let id of ['man','vrouw'])document.getElementById(id).onclick=()=>{who=id;for(let a of ['man','vrouw'])document.getElementById(a).classList.toggle('active',a===id)};
+for(let id of ['left','right']){let b=document.getElementById(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held[id]=true});for(let ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,()=>held[id]=false)}
+window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','a','d','A','D'].includes(e.key))e.preventDefault();if(['ArrowLeft','a','A'].includes(e.key))held.left=true;if(['ArrowRight','d','D'].includes(e.key))held.right=true});window.addEventListener('keyup',e=>{if(['ArrowLeft','a','A'].includes(e.key))held.left=false;if(['ArrowRight','d','D'].includes(e.key))held.right=false});window.addEventListener('blur',()=>held.left=held.right=false);
+function shape(fill,stroke='#273345',lw=3){x.fillStyle=fill;x.strokeStyle=stroke;x.lineWidth=lw;x.fill();x.stroke()}function oval(cx,cy,rx,ry,fill){x.beginPath();x.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);shape(fill)}function limb(a,b,c,d,width,color){x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.lineWidth=width;x.lineCap='round';x.strokeStyle=color;x.stroke();x.lineWidth=2;x.strokeStyle='#263043';x.stroke()}
+function character(px,ground,phase,moving){let fem=who==='vrouw',s=moving?Math.sin(phase):0; x.save();x.translate(px,ground);x.scale(dir,1);x.translate(0,moving?Math.abs(Math.sin(phase))*-2:0);
+// Shadow
+x.fillStyle='#0002';x.beginPath();x.ellipse(0,3,33,7,0,0,7);x.fill();
+// Back leg, boots
+limb(-9,-72,-12+s*14,-29,17,fem?'#606d51':'#35577c');limb(-12+s*14,-29,-14+s*23,-10,15,fem?'#606d51':'#35577c');oval(-10+s*23,-6,16,8,'#5b3829');
+// backpack
+x.beginPath();x.roundRect(-32,-145,22,65,7);shape(fem?'#556548':'#263e53');
+// far arm
+limb(-10,-132,-20+s*14,-95,13,fem?'#e1a87f':'#bd4032');oval(-20+s*14,-92,7,9,'#e9b18a');
+// front leg
+limb(10,-73,12-s*14,-30,18,fem?'#687656':'#41658a');limb(12-s*14,-30,15-s*23,-10,15,fem?'#687656':'#41658a');oval(19-s*23,-6,17,8,'#65402c');
+// torso
+x.beginPath();x.moveTo(-20,-145);x.quadraticCurveTo(0,-154,21,-143);x.lineTo(18,-79);x.quadraticCurveTo(0,-70,-20,-80);x.closePath();shape(fem?'#eee7dc':'#b93d2f');
+// belt
+x.fillStyle='#553e32';x.fillRect(-18,-85,36,7);x.fillStyle='#d6a75a';x.fillRect(-3,-85,9,7);
+// head and hair
+oval(0,-169,fem?23:24,28,'#e9b28a');oval(17,-167,5,7,'#dfa078');
+x.beginPath();x.moveTo(-23,-174);x.quadraticCurveTo(-28,-207,0,-201);x.quadraticCurveTo(25,-207,23,-181);x.quadraticCurveTo(9,-192,-2,-187);x.quadraticCurveTo(-17,-183,-23,-174);shape(fem?'#663b2c':'#78452c');
+if(fem){oval(-22,-177,8,10,'#70422e');x.beginPath();x.moveTo(-15,-197);x.quadraticCurveTo(-43,-222,-37,-177);x.quadraticCurveTo(-25,-169,-24,-190);shape('#70422e')}
+// eyes nose smile
+oval(12,-172,3,4,'#fff');oval(14,-172,1.5,2.5,'#292e37');x.beginPath();x.moveTo(22,-164);x.lineTo(26,-161);x.strokeStyle='#b67c5c';x.lineWidth=2;x.stroke();x.beginPath();x.arc(11,-155,7,.25,1.1);x.strokeStyle='#8c4c42';x.stroke();
+// foreground arm
+limb(15,-133,23-s*16,-98,14,fem?'#e4ac85':'#c44c38');oval(23-s*16,-95,7,9,'#e9b28a');x.restore()}
+function frame(t){let dt=Math.min(.04,(t-last)/1000);last=t;let v=(held.right?1:0)-(held.left?1:0);if(v){dir=v;pos=Math.max(45,Math.min(955,pos+v*210*dt));walk+=dt*12}let sky=x.createLinearGradient(0,0,0,560);sky.addColorStop(0,'#7ab8e9');sky.addColorStop(1,'#e7f5fc');x.fillStyle=sky;x.fillRect(0,0,1000,560);x.fillStyle='#f5f8e8';for(let i=0;i<6;i++){x.beginPath();x.ellipse(90+i*190,400,160,70,0,0,7);x.fill()}x.fillStyle='#76a967';x.fillRect(0,470,1000,90);x.fillStyle='#4c8151';x.fillRect(0,470,1000,8);character(pos,470,walk,!!v);x.fillStyle='#17314b';x.font='bold 23px system-ui';x.fillText('Level 1 · Eerste stappen',30,45);requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script></body></html>
